@@ -1,4 +1,4 @@
-/*
+/*#ifdef TTS_DEFAULT_BACKEND_FIREBOLT
  * If not stated otherwise in this file or this component's LICENSE file the
  * following copyright and licenses apply:
  *
@@ -19,7 +19,9 @@
 
 #include "TTSClientPrivateCOMRPC.h"
 #include "TTSClientPrivateJsonRPC.h"
+#ifdef TTS_DEFAULT_BACKEND_FIREBOLT
 #include "TTSClientPrivateFirebolt.h"
+#endif
 #include "logger.h"
 #include <mutex>
 // --- //
@@ -36,7 +38,9 @@ namespace TTS {
 
 TTSClient::Backend getTTSBackend() {
     static const char *kCOMRPC = "comrpc";
+#ifdef TTS_DEFAULT_BACKEND_FIREBOLT
     static const char *kFIREBOLT = "firebolt";
+#endif
 
     static const char *backendEnv = getenv("TTS_CLIENT_BACKEND");
     static const char *thunderClientEnv = getenv("TTS_USE_THUNDER_CLIENT"); // will go away eventually
@@ -56,8 +60,11 @@ TTSClient::Backend getTTSBackend() {
     if(backendConfig) {
         if(strncasecmp(backendConfig, kCOMRPC, strlen(kCOMRPC)) == 0)
             backend = TTSClient::COM;
-        else if (strncasecmp(backendConfig, kFIREBOLT, strlen(kFIREBOLT)) == 0)
-            backend = TTSClient::FIREBOLT;         
+#ifdef TTS_DEFAULT_BACKEND_FIREBOLT
+	else if (strncasecmp(backendConfig, kFIREBOLT, strlen(kFIREBOLT)) == 0){
+            backend = TTSClient::FIREBOLT;
+	}
+#endif
     }
 
     if(thunderClientEnv)
@@ -86,10 +93,12 @@ TTSClient::TTSClient(Backend backend, TTSConnectionCallback *callback, bool disc
             TTSLOG_INFO("TTSClient is using JSONRPC");
             m_priv = new TTSClientPrivateJsonRPC(callback, discardRtDispatching);
             break;
-	    case FIREBOLT:
-	        TTSLOG_INFO("TTSClient is using FIREBOLT");
-	        m_priv = new TTSClientPrivateFirebolt(callback, discardRtDispatching);
-	        break;
+#ifdef TTS_DEFAULT_BACKEND_FIREBOLT
+	case FIREBOLT:
+	    TTSLOG_INFO("TTSClient is using FIREBOLT");
+	    m_priv = new TTSClientPrivateFirebolt(callback, discardRtDispatching);
+	    break;
+#endif
     }
 }
 
