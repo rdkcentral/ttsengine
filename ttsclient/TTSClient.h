@@ -92,7 +92,9 @@ public:
     enum Backend {
         COM,
         JSON,
-	    FIREBOLT
+#ifdef TTS_DEFAULT_BACKEND_FIREBOLT
+	FIREBOLT
+#endif
     };
 
     static TTSClient *create(TTSConnectionCallback *connCallback, bool discardRtDispatching=false);

@@ -29,7 +29,7 @@ static std::mutex __mutex;
 
 std::condition_variable cv;
 std::mutex mtx;
-namespace TTSFirebolt{
+namespace TTSFirebolt {
 
 bool TextToSpeechServiceFirebolt::isConnected;
 
@@ -53,18 +53,22 @@ void TextToSpeechServiceFirebolt::initialize() {
     if(initialized())
         return;
     const char* firebolt_endpoint = std::getenv("FIREBOLT_ENDPOINT");
-    //const char* firebolt_endpoint = "ws://127.0.0.1:3474";
     if(firebolt_endpoint != nullptr) {
         std::string url = firebolt_endpoint;
-        if(!createFireboltInstance(url)){
+        if(!createFireboltInstance(url)) {
             TTSLOG_ERROR("Failed to create FireboltInstance URL: [%s]", url.c_str());
             return;
         }
         std::unique_lock<std::mutex> lock(mtx);
-        cv.wait(lock, [this]{ return isConnected; });
-        m_initialized = true;
-        subscribeEvents();
-        TTSLOG_INFO("Firebolt Core Intiailized URL: [%s]", url.c_str());
+	/*Wait Time is 500 millisecond*/
+        if (cv.wait_for(lock, std::chrono::milliseconds(500), [this] { return isConnected; })) {
+            m_initialized = true;
+            subscribeEvents();
+            TTSLOG_INFO("Firebolt Core Intiailized URL: [%s]", url.c_str());
+	    }
+	    else {
+	        TTSLOG_ERROR("Firebolt Core Intiailized URL: [%s] Failed(Timeout)", url.c_str());
+	    }
     }
     else {
         TTSLOG_ERROR("No Firebolt endpoint; initialization failed");
@@ -306,6 +310,7 @@ bool TextToSpeechServiceFirebolt::isEnabled(bool &enable)
     if( error == Firebolt::Error::None && !ttsEnabled.TTS_status)
     {
         enable = ttsEnabled.isenabled;
+	TTSLOG_INFO("isEnabled:Firebolt Sucessful:enabled: \"%s\"", enable ? "true" : "false");
         return true;
     }
     if(error != Firebolt::Error::None) {

@@ -69,7 +69,7 @@ bool TTSClientPrivateFirebolt::isTTSEnabled(bool force) {
     } else {
 
         if(!TextToSpeechServiceFirebolt::Instance()->isEnabled(m_ttsEnabled)) {
-            TTSLOG_ERROR("Couldn't retrieve TTS enabled/disabled detail");
+            TTSLOG_ERROR("TTS disabled");
             return false;
         }
         TTSLOG_VERBOSE("TTS is %s", m_ttsEnabled ? "enabled" : "disabled");
