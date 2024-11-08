@@ -22,21 +22,30 @@ pkg_check_modules(WPEFRAMEWORK_SECURITYUTIL WPEFrameworkSecurityUtil)
 
 # Build TTS Service Client library
 set(TextToSpeechServiceClient_SOURCES
-        TextToSpeechServiceCOMRPC.cpp
-        TextToSpeechService.cpp
-        Service.cpp
-        ../common/logger.cpp
-	TextToSpeechServiceFirebolt.cpp
-   )
+    TextToSpeechServiceCOMRPC.cpp
+    TextToSpeechService.cpp
+    Service.cpp
+    ../common/logger.cpp
+)
+
+if(TTS_DEFAULT_BACKEND STREQUAL "firebolt")
+    list(APPEND TextToSpeechServiceClient_SOURCES TextToSpeechServiceFirebolt.cpp)
+endif()
+
 add_library(TextToSpeechServiceClient SHARED ${TextToSpeechServiceClient_SOURCES})
 
 # Build TTS Service Client library
 set(TTSClient_SOURCES
-        TTSClient.cpp
-        TTSClientPrivateJsonRPC.cpp
-        TTSClientPrivateCOMRPC.cpp
-	TTSClientPrivateFirebolt.cpp
-   )
+    TTSClient.cpp
+    TTSClientPrivateJsonRPC.cpp
+    TTSClientPrivateCOMRPC.cpp
+)
+
+if(TTS_DEFAULT_BACKEND STREQUAL "firebolt")
+    add_definitions(-DTTS_DEFAULT_BACKEND_FIREBOLT)
+    list(APPEND TTSClient_SOURCES TTSClientPrivateFirebolt.cpp)
+endif()
+
 add_library(TTSClient SHARED ${TTSClient_SOURCES})
 
 target_include_directories(TextToSpeechServiceClient PUBLIC ${WPEFRAMEWORK_PLUGINS_INCLUDE_DIRS})
@@ -50,18 +59,26 @@ if(TTS_DEFAULT_BACKEND)
     add_definitions(-DTTS_DEFAULT_BACKEND="${TTS_DEFAULT_BACKEND}")
 endif()
 
-target_link_libraries(TextToSpeechServiceClient PUBLIC
+if(TTS_DEFAULT_BACKEND STREQUAL "firebolt")
+    target_link_libraries(TextToSpeechServiceClient PUBLIC
         ${WPEFRAMEWORK_PLUGINS_LIBRARIES}
         ${WPEFRAMEWORK_SECURITYUTIL_LIBRARIES}
         -lpthread
-	    FireboltSDK
+        FireboltSDK
     )
+else()
+    target_link_libraries(TextToSpeechServiceClient PUBLIC
+        ${WPEFRAMEWORK_PLUGINS_LIBRARIES}
+        ${WPEFRAMEWORK_SECURITYUTIL_LIBRARIES}
+        -lpthread
+    )
+endif()
 
 target_link_libraries(TTSClient PUBLIC
-        ${GLIB_LIBRARIES}
-        ${LIBS}
-        TextToSpeechServiceClient
-    )
+    ${GLIB_LIBRARIES}
+    ${LIBS}
+    TextToSpeechServiceClient
+)
 
 install(TARGETS TTSClient TextToSpeechServiceClient LIBRARY DESTINATION lib)
 install(FILES TTSClient.h ../common/TTSCommon.h TextToSpeechService.h Service.h DESTINATION include)
