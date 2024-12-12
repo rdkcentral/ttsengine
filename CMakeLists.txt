@@ -20,7 +20,6 @@ cmake_minimum_required(VERSION 2.8)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GLIB REQUIRED glib-2.0)
-pkg_check_modules(LIBSOUP REQUIRED libsoup-2.4)
 pkg_check_modules(ZLIB REQUIRED zlib)
 pkg_check_modules(OPENSSL REQUIRED openssl)
 pkg_check_modules(CURL REQUIRED libcurl)
