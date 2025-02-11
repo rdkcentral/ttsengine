@@ -123,7 +123,7 @@ bool TextToSpeechServiceFirebolt::destroyFireboltInstance(){
 }
 
 TextToSpeechServiceFirebolt::~TextToSpeechServiceFirebolt(){
-
+    deinitialize();
 }
 
 void TextToSpeechServiceFirebolt::registerClient(Client* client){
