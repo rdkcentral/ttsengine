@@ -53,7 +53,6 @@ TTSClientPrivateFirebolt::TTSClientPrivateFirebolt(TTSConnectionCallback *callba
 }
 
 TTSClientPrivateFirebolt::~TTSClientPrivateFirebolt() {
-    TextToSpeechServiceFirebolt::Instance()-> deinitialize();
     TextToSpeechServiceFirebolt::Instance()->unregisterClient(this);
     abort(DEFAULT_SESSION_ID, false);
     destroySession(DEFAULT_SESSION_ID);
