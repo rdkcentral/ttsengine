@@ -51,7 +51,7 @@ TTSClient::Backend getTTSBackend() {
 #endif
 
     TTSLOG_INFO("TTSClient Backend: default=\"%s\", TTS_CLIENT_BACKEND=\"%s\", TTS_USE_THUNDER_CLIENT=\"%s\"",
-            backendConfig ? backendConfig : "", backendEnv ? backendEnv : "", thunderClientEnv ? thunderClientEnv : "");
+            backendConfig ? backendConfig : "", backendEnv ? backendEnv : "");
 
     if(backendEnv)
         backendConfig = backendEnv;
