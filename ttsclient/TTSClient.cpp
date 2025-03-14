@@ -24,6 +24,7 @@
 #endif
 #include "logger.h"
 #include <mutex>
+
 // --- //
 
 namespace TTS {
