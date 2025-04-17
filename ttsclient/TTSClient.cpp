@@ -72,13 +72,42 @@ TTSClient::Backend getTTSBackend() {
 
     return backend;
 }
+bool isBackendValid(TTSClient::Backend backend)
+{
+    bool result = true;
+    switch (backend)
+    {
+#ifdef TTS_DEFAULT_BACKEND_FIREBOLT
+    case TTSClient::FIREBOLT:
+        {
+            const char *fireboltEndpoint = std::getenv("FIREBOLT_ENDPOINT");
+            result = (!fireboltEndpoint) ?  false : true;
+        }
+        break;
+#endif
+    case TTSClient::COM:
+        break;
+    case TTSClient::JSON:
+        break;
+    default:
+        break;
+    }
+
+    return result;
+}
 
 TTSClient *TTSClient::create(TTSConnectionCallback *callback, bool discardRtDispatching)
 {
     static std::mutex mutex;
     std::lock_guard<std::mutex> lock(mutex);
     TTSClient::Backend backend = getTTSBackend();
-    return new TTSClient(backend, callback, discardRtDispatching);
+    if(isBackendValid(backend)) {
+        TTSLOG_INFO("TTSClient Backend is valid");
+        return new TTSClient(backend, callback, discardRtDispatching);
+    } else {
+        TTSLOG_ERROR("TTSClient Backend is not valid, TTSClient can't be instantiated");
+        return NULL;
+    }
 }
 
 TTSClient::TTSClient(Backend backend, TTSConnectionCallback *callback, bool discardRtDispatching) {
