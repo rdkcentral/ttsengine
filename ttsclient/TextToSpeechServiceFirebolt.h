@@ -121,7 +121,7 @@ public:
     static TextToSpeechServiceFirebolt* Instance();    
     //TextToSpeechServiceFirebolt(const TextToSpeechServiceFirebolt&) = delete;
     //TextToSpeechServiceFirebolt& operator=(const TextToSpeechServiceFirebolt&) = delete;    
-    virtual ~TextToSpeechServiceFirebolt();
+
     // Firebolt APIs
     bool isActive(bool force=false);
   
@@ -149,6 +149,7 @@ public:
     
 private:
     TextToSpeechServiceFirebolt();
+    ~TextToSpeechServiceFirebolt();
 
     //Firebolt APIs
     bool createFireboltInstance(const std::string& url);

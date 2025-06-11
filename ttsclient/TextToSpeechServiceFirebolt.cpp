@@ -44,8 +44,9 @@ TextToSpeechServiceFirebolt::OnTtsstatechangedNotification TextToSpeechServiceFi
 TextToSpeechServiceFirebolt::OnVoicechangedNotification TextToSpeechServiceFirebolt::onVoicechangedNotification;
 
 TextToSpeechServiceFirebolt* TextToSpeechServiceFirebolt::Instance() {
-    static TextToSpeechServiceFirebolt instance;
-    return &instance;
+    // Allocating static object to heap; memory reclaimed at process exit
+    __attribute__((used)) static TextToSpeechServiceFirebolt* instance = new TextToSpeechServiceFirebolt();
+    return instance;
 }
 
 void TextToSpeechServiceFirebolt::initialize() {
