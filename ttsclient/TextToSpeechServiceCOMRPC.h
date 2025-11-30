@@ -127,43 +127,43 @@ public:
 
         public:
             // ITextToSpeech::INotification
-            virtual void Enabled(const bool state) override {
+            virtual void onTTSEnabled(const bool state) override {
                 _parent.dispatchEvent(EventType::StateChange,JsonValue((bool)state));
             }
 
-            virtual void VoiceChanged(const string voice) override {
+            virtual void onVoiceUpdated(const string voice) override {
                 _parent.dispatchEvent(EventType::VoiceChange,JsonValue((std::string)voice));
             }
 
-            virtual void WillSpeak(const uint32_t ) {
+            virtual void onSpeechReady(const uint32_t ) {
                 // Ignore
             }
 
-            virtual void SpeechStart(const uint32_t speechid) override {
+            virtual void onSpeechStarted(const uint32_t speechid) override {
                 _parent.dispatchEvent(EventType::SpeechStart,JsonValue((int)speechid));
             }
 
-            virtual void SpeechPause(const uint32_t speechid) override {
+            virtual void onSpeechPaused(const uint32_t speechid) override {
                 _parent.dispatchEvent(EventType::SpeechPause, JsonValue((int)speechid));
             }
 
-            virtual void SpeechResume(const uint32_t speechid) override {
+            virtual void onSpeechResumed(const uint32_t speechid) override {
                 _parent.dispatchEvent(EventType::SpeechResume, JsonValue((int)speechid));
             }
 
-            virtual void SpeechInterrupted(const uint32_t speechid) override {
+            virtual void onSpeechDisrupted(const uint32_t speechid) override {
                 _parent.dispatchEvent(EventType::SpeechInterrupt, JsonValue((int)speechid));
             }
 
-            virtual void NetworkError(const uint32_t speechid) override {
+            virtual void onConnectionLost(const uint32_t speechid) override {
                 _parent.dispatchEvent(EventType::NetworkError, JsonValue((int)speechid));
             }
 
-            virtual void PlaybackError(const uint32_t speechid) override {
+            virtual void onPlaybackFailed(const uint32_t speechid) override {
                 _parent.dispatchEvent(EventType::PlaybackError, JsonValue((int)speechid));
             }
 
-            virtual void SpeechComplete(const uint32_t speechid) override {
+            virtual void onSpeechCompleted(const uint32_t speechid) override {
                 _parent.dispatchEvent(EventType::SpeechComplete, JsonValue((int)speechid));
             }
 
