@@ -84,6 +84,7 @@ void TextToSpeechService::registerSpeechEventHandlers()
         subscribe("onnetworkerror", onNetworkError, this);
         subscribe("onplaybackerror", onPlaybackError, this);
         subscribe("onspeechcomplete", onSpeechComplete, this);
+        /*dummy text to check coverity*/
     }
 }
 
