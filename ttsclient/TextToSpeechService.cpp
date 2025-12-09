@@ -83,6 +83,7 @@ void TextToSpeechService::registerSpeechEventHandlers()
         subscribe("onspeechinterrupted", onSpeechInterrupt, this);
         subscribe("onnetworkerror", onNetworkError, this);
         subscribe("onplaybackerror", onPlaybackError, this);
+        /*test*/
         subscribe("onspeechcomplete", onSpeechComplete, this);
     }
 }
