@@ -282,7 +282,7 @@ bool  TextToSpeechServiceCOMRPC::isEnabled(bool &enable)
        TTSLOG_ERROR("Callsign \"%s\" is not active (or) COM channel is couldn't be opened", TEXTTOSPEECH_CALLSIGN);
        return false;
     }
-    ret = static_cast<const WPEFramework::Exchange::ITextToSpeech*>(m_remoteObject)->GetTTSStatus(enable);
+    ret = static_cast<const WPEFramework::Exchange::ITextToSpeech*>(m_remoteObject)->Enable(enable);
     return ret == Core::ERROR_NONE;
 }
 
