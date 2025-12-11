@@ -155,11 +155,11 @@ public:
                 _parent.dispatchEvent(EventType::SpeechInterrupt, JsonValue((int)speechid));
             }
 
-            virtual void NetworkError(const uint32_t speechid) override {
+            virtual void OnNetworkError(const uint32_t speechid) override {
                 _parent.dispatchEvent(EventType::NetworkError, JsonValue((int)speechid));
             }
 
-            virtual void PlaybackError(const uint32_t speechid) override {
+            virtual void OnPlaybackError(const uint32_t speechid) override {
                 _parent.dispatchEvent(EventType::PlaybackError, JsonValue((int)speechid));
             }
 
