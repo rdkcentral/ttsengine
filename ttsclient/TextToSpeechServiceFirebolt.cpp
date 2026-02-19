@@ -56,6 +56,7 @@ void TextToSpeechServiceFirebolt::initialize() {
     const char* firebolt_endpoint = std::getenv("FIREBOLT_ENDPOINT");
     if(firebolt_endpoint != nullptr) {
         std::string url = firebolt_endpoint;
+        printf("kykumar firebolt endpoint %s\n", url.c_str());
         if(!createFireboltInstance(url)) {
             TTSLOG_ERROR("Failed to create FireboltInstance URL: [%s]", url.c_str());
             return;
