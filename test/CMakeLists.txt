@@ -17,12 +17,16 @@
 # limitations under the License.
 ################################################################################
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(GLIB REQUIRED glib-2.0)
+
 include_directories(../ttsclient)
 
 add_executable(TTSAPITest TTSAPITest.cpp)
 target_link_libraries(TTSAPITest PUBLIC TTSClient)
 
 add_executable(TTSMultiClientTest TTSMultiClientTest.cpp)
-target_link_libraries(TTSMultiClientTest PUBLIC TTSClient)
+target_include_directories(TTSMultiClientTest PUBLIC ${GLIB_INCLUDE_DIRS})
+target_link_libraries(TTSMultiClientTest PUBLIC TTSClient ${GLIB_LIBRARIES})
 
 install(TARGETS TTSAPITest TTSMultiClientTest RUNTIME DESTINATION bin)

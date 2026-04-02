@@ -49,7 +49,7 @@ TTSClientPrivateFirebolt::TTSClientPrivateFirebolt(TTSConnectionCallback *callba
     TextToSpeechServiceFirebolt::Instance()->registerClient(this);
 
     if(TextToSpeechServiceFirebolt::Instance()->isActive() && m_connectionCallback)
-        m_connectionCallback->onTTSServerConnected();     	
+        m_connectionCallback->onTTSServerConnected();
 }
 
 TTSClientPrivateFirebolt::~TTSClientPrivateFirebolt() {
@@ -109,7 +109,7 @@ TTS_Error TTSClientPrivateFirebolt::listVoices(std::string &language, std::vecto
 
 TTS_Error TTSClientPrivateFirebolt::enableTTS(bool enable) {
     TTSLOG_WARNING("enableTTS not supported through firebolt %d", enable);
-    return TTS::TTS_OK;
+    return TTS::TTS_FAIL;
 }
 
 TTS_Error TTSClientPrivateFirebolt::resume(uint32_t sessionId, uint32_t speechId) {
@@ -122,7 +122,7 @@ TTS_Error TTSClientPrivateFirebolt::resume(uint32_t sessionId, uint32_t speechId
     }
 
     // Firebolt Expecting speechId
-    
+
     uint32_t serviceid = m_requestedSpeeches.getServiceId(speechId);
     if(!serviceid) {
         TTSLOG_WARNING("No speech in progress");
@@ -160,20 +160,18 @@ TTS_Error TTSClientPrivateFirebolt::getSpeechState(uint32_t sessionId, uint32_t 
     UNUSED(sessionId);
 
     uint32_t serviceid = m_requestedSpeeches.getServiceId(speechId);
-    
+
     if(!serviceid) {
         TTSLOG_WARNING("No speech in progress");
         return TTS_OK;
     }
-    TTSLOG_WARNING("state is SPEECH_IN_PROGRESS = %d", state == SPEECH_IN_PROGRESS); // Just to resolve unused compilation error
-    Firebolt::TextToSpeech::SpeechStateResponse speechStateResponse;
-    if(!TextToSpeechServiceFirebolt::Instance()->getSpeechState(speechId,speechStateResponse)) {
+    Firebolt::TextToSpeech::SpeechState fbState;
+    if(!TextToSpeechServiceFirebolt::Instance()->getSpeechState(speechId, fbState)) {
         TTSLOG_ERROR("Couldn't retrieve speech state");
         return TTS_FAIL;
     }
-    // ! Enum state expects enum value;
-    //state = (SpeechState) speechStateResponse.speechstate ;
-    return TTS_OK;  
+    state = static_cast<SpeechState>(static_cast<int>(fbState));
+    return TTS_OK;
 }
 
 TTS_Error TTSClientPrivateFirebolt::destroySession(uint32_t sessionId) {
@@ -192,13 +190,13 @@ TTS_Error TTSClientPrivateFirebolt::speak(uint32_t sessionId, SpeechData& data) 
         return TTS_NOT_ENABLED;
     }*/
     m_lastSpeechId = 0;
-    if(!TextToSpeechServiceFirebolt::Instance()->speak(m_callsign, data.text, m_lastSpeechId)) {
+    if(!TextToSpeechServiceFirebolt::Instance()->speak(data.text, m_lastSpeechId)) {
         return TTS_FAIL;
     }
 
     bool success = m_requestedSpeeches.add(data.id, m_lastSpeechId);
-    TTSLOG_INFO("Requested speech with clientid-%d, serviceid-%d, is_duplicate_client_id=%d", data.id, m_lastSpeechId, !success);    
-    return TTS_OK;   
+    TTSLOG_INFO("Requested speech with clientid-%d, serviceid-%d, is_duplicate_client_id=%d", data.id, m_lastSpeechId, !success);
+    return TTS_OK;
 }
 
 TTS_Error TTSClientPrivateFirebolt::abort(uint32_t sessionId, bool clearPending) {
@@ -225,33 +223,14 @@ TTS_Error TTSClientPrivateFirebolt::abort(uint32_t sessionId, bool clearPending)
 }
 
 TTS_Error TTSClientPrivateFirebolt::setTTSConfiguration(Configuration &config) {
-    Firebolt::TextToSpeech::TTSConfiguration ttsConfiguration;
-
-    ttsConfiguration.ttsendpoint= config.ttsEndPoint;
-    ttsConfiguration.ttsendpointsecured = config.ttsEndPointSecured;
-    ttsConfiguration.language = config.language;
-    ttsConfiguration.voice = config.voice;
-    ttsConfiguration.volume = (int32_t) config.volume;
-    ttsConfiguration.rate = config.rate;
-    if(!TextToSpeechServiceFirebolt::Instance()->setConfiguration(ttsConfiguration)) {
-        TTSLOG_ERROR("Couldn't set default configuration");
-        return TTS_FAIL;
-    }
+    TTSLOG_WARNING("setTTSConfiguration not supported in firebolt-cpp-client 0.5.3");
+    UNUSED(config);
     return TTS_OK;
 }
 
 TTS_Error TTSClientPrivateFirebolt::getTTSConfiguration(Configuration &config) {
-    Firebolt::TextToSpeech::TTSConfiguration ttsConfiguration;
-    if(!TextToSpeechServiceFirebolt::Instance()->getConfiguration(ttsConfiguration)) {
-        TTSLOG_ERROR("Couldn't get default configuration");
-        return TTS_FAIL;
-    }
-    config.ttsEndPoint= ttsConfiguration.ttsendpoint.value();
-    config.ttsEndPointSecured = ttsConfiguration.ttsendpointsecured.value();
-    config.language = ttsConfiguration.language.value();
-    config.voice = ttsConfiguration.voice.value();
-    config.volume = ttsConfiguration.volume.value();
-    config.rate = ttsConfiguration.rate.value();
+    TTSLOG_WARNING("getTTSConfiguration not supported in firebolt-cpp-client 0.5.3");
+    UNUSED(config);
     return TTS_OK;
 }
 

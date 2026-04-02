@@ -93,7 +93,7 @@ public:
         COM,
         JSON,
 #ifdef TTS_DEFAULT_BACKEND_FIREBOLT
-	FIREBOLT
+        FIREBOLT
 #endif
     };
 

@@ -28,8 +28,8 @@
 
 namespace TTS {
 
-const char* methodName(const std::string& prettyFunction);
-#define __METHOD_NAME__ TTS::methodName(__PRETTY_FUNCTION__)
+//const char* methodName(const std::string& prettyFunction);
+//#define __METHOD_NAME__ TTS::methodName(__PRETTY_FUNCTION__)
 
 /**
  * Logging level with an increasing order of refinement

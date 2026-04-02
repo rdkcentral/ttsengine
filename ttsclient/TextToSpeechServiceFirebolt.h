@@ -19,9 +19,11 @@
 #pragma once
 
 #include <iostream>
-#include "firebolt.h"
-#include "texttospeech.h"
+#include <firebolt/firebolt.h>
+#include <firebolt/texttospeech.h>
+#include <firebolt/config.h>
 #include <list>
+#include <map>
 #include <mutex>
 #include <optional>
 #include <cassert>
@@ -56,97 +58,34 @@ public:
         virtual void onPlaybackError(uint32_t /*speeechId*/) {};
         virtual void onSpeechComplete(uint32_t /*speeechId*/) {};
     };
-    
+
     using ClientList = std::list<Client*>;
-    // Firebolt APIs
-
-    // Notification for events
-    class OnNetworkerrorNotification : public Firebolt::TextToSpeech::ITextToSpeech::IOnNetworkerrorNotification {
-    public:
-        void onNetworkerror( const Firebolt::TextToSpeech::SpeechIdEvent& ) override;
-    };
-
-    class OnPlaybackErrorNotification : public Firebolt::TextToSpeech::ITextToSpeech::IOnPlaybackErrorNotification {
-    public:
-        void onPlaybackError( const Firebolt::TextToSpeech::SpeechIdEvent& ) override;
-    };
-
-    /* onSpeechcomplete - Triggered when the speech completes. */
-    class OnSpeechcompleteNotification : public Firebolt::TextToSpeech::ITextToSpeech::IOnSpeechcompleteNotification {
-    public:    
-        void onSpeechcomplete( const Firebolt::TextToSpeech::SpeechIdEvent& ) override;
-    };
-
-    /* onSpeechinterrupted - Triggered when the current speech is interrupted either by a next speech request, by calling cancel or by disabling TTS, when speech is in progress. */
-    class OnSpeechinterruptedNotification : public Firebolt::TextToSpeech::ITextToSpeech::IOnSpeechinterruptedNotification {
-    public:
-        void onSpeechinterrupted( const Firebolt::TextToSpeech::SpeechIdEvent& ) override;
-    };
-
-    /* onSpeechpause - Triggered when the ongoing speech pauses. */
-    class OnSpeechpauseNotification : public Firebolt::TextToSpeech::ITextToSpeech::IOnSpeechpauseNotification {
-    public:
-        void onSpeechpause( const Firebolt::TextToSpeech::SpeechIdEvent& ) override;
-    };
-
-    /* onSpeechresume - Triggered when any paused speech resumes. */
-    class OnSpeechresumeNotification : public Firebolt::TextToSpeech::ITextToSpeech::IOnSpeechresumeNotification {
-    public:
-        void onSpeechresume( const Firebolt::TextToSpeech::SpeechIdEvent& ) override;
-    };
-
-    /* onSpeechstart - Triggered when the speech start. */
-    class OnSpeechstartNotification : public Firebolt::TextToSpeech::ITextToSpeech::IOnSpeechstartNotification {
-    public:
-        void onSpeechstart( const Firebolt::TextToSpeech::SpeechIdEvent& ) override;
-    };
-
-    /* onTtsstatechanged - Triggered when TTS is enabled or disabled */
-    class OnTtsstatechangedNotification : public Firebolt::TextToSpeech::ITextToSpeech::IOnTTSstatechangedNotification {
-    public:
-        void onTTSstatechanged( const Firebolt::TextToSpeech::TTSState& ) override;
-    };
-
-    /* onVoicechanged - Triggered when the configured voice changes. */
-    class OnVoicechangedNotification : public Firebolt::TextToSpeech::ITextToSpeech::IOnVoicechangedNotification {
-    public:
-        void onVoicechanged( const Firebolt::TextToSpeech::TTSVoice& ) override;
-    };
 
     void initialize();
     void deinitialize();
 
 public:
 
-    static TextToSpeechServiceFirebolt* Instance();    
-    //TextToSpeechServiceFirebolt(const TextToSpeechServiceFirebolt&) = delete;
-    //TextToSpeechServiceFirebolt& operator=(const TextToSpeechServiceFirebolt&) = delete;    
+    static TextToSpeechServiceFirebolt* Instance();
 
     // Firebolt APIs
     bool isActive(bool force=false);
-  
+
     void registerClient(Client* client);
     void unregisterClient(Client* client);
 
-    bool setConfiguration(Firebolt::TextToSpeech::TTSConfiguration &ttsconfig);
-    bool getConfiguration(Firebolt::TextToSpeech::TTSConfiguration &ttsconfig);
     bool listVoices(std::string &language, std::vector<std::string> &voices);
     bool isSpeaking(uint32_t &speechid,bool &isspeaking);
-    bool getSpeechState(uint32_t &speechid,Firebolt::TextToSpeech::SpeechStateResponse &state);
-    bool isEnabled(bool &enable);
-    //bool enableTTS(bool &enable);
-    bool speak(std::string &callsign,std::string &text,uint32_t &speechid);
+    bool getSpeechState(uint32_t &speechid, Firebolt::TextToSpeech::SpeechState &state);
+    bool isEnabled(bool &enable) {
+        enable = isActive();
+        return true;
+    }
+    bool speak(std::string &text,uint32_t &speechid);
     bool pause(uint32_t &speechid);
     bool resume(uint32_t &speechid);
     bool cancel(uint32_t &speechid);
 
-    void SubscribeVoiceGuidanceSettings(const std::string&);
-    void UnsubscribeVoiceGuidanceSettings( const std::string&);
-
-    
-
-
-    
 private:
     TextToSpeechServiceFirebolt();
     ~TextToSpeechServiceFirebolt();
@@ -155,38 +94,27 @@ private:
     bool createFireboltInstance(const std::string& url);
     bool destroyFireboltInstance();
     bool subscribeEvents();
-    bool unSubscribeEvents();
-    bool waitOnConnectionReady();
+    void unSubscribeEvents();
     bool initialized();
-
-    friend class OnTtsstatechangedNotification;
-    friend class OnVoicechangedNotification;
-    friend class onNetworkerrorNotification;
-    friend class onPlaybackErrorNotification;
-    friend class onSpeechcompleteNotification;
-    friend class onSpeechinterruptedNotification;
-    friend class onSpeechpauseNotification;
-    friend class onSpeechresumeNotification;
-    friend class onSpeechstartNotification;
-    friend class onWillspeakNotification;
 
     void dispatchEvent(EventType event, const std::optional<int32_t>& speechid,const std::optional<bool>& ttsstatus,const std::optional<std::string>& voice);
 
     bool m_initialized;
-        
+
+    std::map<std::string, Firebolt::SubscriptionId> m_subscriptions;
+
     ClientList m_clients;
     std::mutex m_mutex;
     static void connectionChanged(const bool, const Firebolt::Error);
     static bool isConnected;
-    static OnNetworkerrorNotification onNetworkerrorNotification;
-    static OnPlaybackErrorNotification onPlaybackErrorNotification;
-    static OnSpeechcompleteNotification onSpeechcompleteNotification;
-    static OnSpeechinterruptedNotification onSpeechinterruptedNotification;
-    static OnSpeechpauseNotification onSpeechpauseNotification;
-    static OnSpeechresumeNotification onSpeechresumeNotification;
-    static OnSpeechstartNotification onSpeechstartNotification;
-    static OnTtsstatechangedNotification onTtsstatechangedNotification;
-    static OnVoicechangedNotification onVoicechangedNotification;
+
+    static void onNetworkErrorCb(const Firebolt::TextToSpeech::SpeechIdEvent& ev);
+    static void onPlaybackErrorCb(const Firebolt::TextToSpeech::SpeechIdEvent& ev);
+    static void onSpeechStartCb(const Firebolt::TextToSpeech::SpeechIdEvent& ev);
+    static void onSpeechCompleteCb(const Firebolt::TextToSpeech::SpeechIdEvent& ev);
+    static void onSpeechInterruptedCb(const Firebolt::TextToSpeech::SpeechIdEvent& ev);
+    static void onSpeechPauseCb(const Firebolt::TextToSpeech::SpeechIdEvent& ev);
+    static void onSpeechResumeCb(const Firebolt::TextToSpeech::SpeechIdEvent& ev);
 };
 
 }

@@ -35,6 +35,7 @@ static inline void sync_stdout()
         setvbuf(stdout, NULL, _IOLBF, 0);
 }
 
+#if 0
 const char* methodName(const std::string& prettyFunction)
 {
     size_t colons = prettyFunction.find("::");
@@ -43,6 +44,7 @@ const char* methodName(const std::string& prettyFunction)
 
     return prettyFunction.substr(begin,end).c_str();
 }
+#endif
 
 #ifdef USE_RDK_LOGGER
 

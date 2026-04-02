@@ -17,13 +17,16 @@
  * limitations under the License.
 */
 
-#include "TTSClientPrivateCOMRPC.h"
-#include "TTSClientPrivateJsonRPC.h"
 #ifdef TTS_DEFAULT_BACKEND_FIREBOLT
 #include "TTSClientPrivateFirebolt.h"
 #endif
+#ifndef ENABLE_FIREBOLT_ONLY
+#include "TTSClientPrivateCOMRPC.h"
+#include "TTSClientPrivateJsonRPC.h"
+#endif
 #include "logger.h"
 #include <mutex>
+#include <cstring>
 // --- //
 
 namespace TTS {
@@ -112,6 +115,13 @@ TTSClient *TTSClient::create(TTSConnectionCallback *callback, bool discardRtDisp
 
 TTSClient::TTSClient(Backend backend, TTSConnectionCallback *callback, bool discardRtDispatching) {
     switch(backend) {
+#ifdef TTS_DEFAULT_BACKEND_FIREBOLT
+        case FIREBOLT:
+            TTSLOG_INFO("TTSClient is using FIREBOLT");
+            m_priv = new TTSClientPrivateFirebolt(callback, discardRtDispatching);
+            break;
+#endif
+#ifndef ENABLE_FIREBOLT_ONLY
         case COM:
             TTSLOG_INFO("TTSClient is using COMRPC");
             m_priv = new TTSClientPrivateCOMRPC(callback, discardRtDispatching);
@@ -121,12 +131,9 @@ TTSClient::TTSClient(Backend backend, TTSConnectionCallback *callback, bool disc
             TTSLOG_INFO("TTSClient is using JSONRPC");
             m_priv = new TTSClientPrivateJsonRPC(callback, discardRtDispatching);
             break;
-#ifdef TTS_DEFAULT_BACKEND_FIREBOLT
-	case FIREBOLT:
-	    TTSLOG_INFO("TTSClient is using FIREBOLT");
-	    m_priv = new TTSClientPrivateFirebolt(callback, discardRtDispatching);
-	    break;
 #endif
+        default:
+            break;
     }
 }
 

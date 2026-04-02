@@ -125,7 +125,7 @@ void ThreadFunc(void *data) {
     unsigned long appid = 0;
 
     TTSClient *client_list[MAX_CLIENT_COUNT];
-    int session_list[MAX_CLIENT_COUNT][MAX_SESSION_COUNT] = {0};
+    int session_list[MAX_CLIENT_COUNT][MAX_SESSION_COUNT] = {};
 
     // Create n clients
     for(int i = 0; i < td.clientCount; i++) {

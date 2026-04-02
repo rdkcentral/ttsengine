@@ -16,13 +16,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ################################################################################
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.10)
+
+project(tts)
 
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(GLIB REQUIRED glib-2.0)
-pkg_check_modules(ZLIB REQUIRED zlib)
-pkg_check_modules(OPENSSL REQUIRED openssl)
-pkg_check_modules(CURL REQUIRED libcurl)
+
+option(ENABLE_FIREBOLT_ONLY "Enable firebolt only backend." ON)
+
+if (NOT ENABLE_FIREBOLT_ONLY)
+  pkg_check_modules(ZLIB REQUIRED zlib)
+  pkg_check_modules(OPENSSL REQUIRED openssl)
+  pkg_check_modules(CURL REQUIRED libcurl)
+endif()
 
 if(ENABLE_BREAKPAD)
   add_definitions(-DUSE_BREAKPAD)
