@@ -413,8 +413,11 @@ bool TextToSpeechServiceFirebolt::speak(std::string &callsign,std::string &text,
        return false;
     }
     Firebolt::Error error = Firebolt::Error::None;
+	TTSLOG_INFO("RDKEMW Before Firebolt speak(): callsign=%s text=%s",callsign.c_str(),text.c_str());
     Firebolt::TextToSpeech::SpeechResponse speechResponse =
         Firebolt::IFireboltAccessor::Instance().TextToSpeechInterface().speak(text, callsign, &error);
+	TTSLOG_INFO("RDKEMW After Firebolt speak(): callsign=%s text=%s error=%d success=%d speechid=%u",callsign.c_str(),text.c_str(),
+        static_cast<int>(error),speechResponse.success,speechResponse.speechid);
     if (error == Firebolt::Error::None && speechResponse.success) {
         speechid = speechResponse.speechid;
         return true;
