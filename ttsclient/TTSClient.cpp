@@ -20,7 +20,11 @@
 #include "TTSClientPrivateCOMRPC.h"
 #include "TTSClientPrivateJsonRPC.h"
 #ifdef TTS_DEFAULT_BACKEND_FIREBOLT
+#ifdef USE_NATIVE_FIREBOLT_SDK
+#include "TTSClientPrivateNativeFirebolt.h"
+#else
 #include "TTSClientPrivateFirebolt.h"
+#endif
 #endif
 #include "logger.h"
 #include <mutex>

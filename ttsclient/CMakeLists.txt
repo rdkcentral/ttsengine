@@ -29,7 +29,12 @@ set(TextToSpeechServiceClient_SOURCES
 )
 
 if(TTS_DEFAULT_BACKEND STREQUAL "firebolt")
-    list(APPEND TextToSpeechServiceClient_SOURCES TextToSpeechServiceFirebolt.cpp)
+    if(USE_NATIVE_FIREBOLT_SDK)
+        list(APPEND TextToSpeechServiceClient_SOURCES TextToSpeechServiceNativeFirebolt.cpp)
+        add_definitions(-DUSE_NATIVE_FIREBOLT_SDK=1)
+    else()
+        list(APPEND TextToSpeechServiceClient_SOURCES TextToSpeechServiceFirebolt.cpp)
+    endif()
 endif()
 
 add_library(TextToSpeechServiceClient SHARED ${TextToSpeechServiceClient_SOURCES})
@@ -43,7 +48,11 @@ set(TTSClient_SOURCES
 
 if(TTS_DEFAULT_BACKEND STREQUAL "firebolt")
     add_definitions(-DTTS_DEFAULT_BACKEND_FIREBOLT)
-    list(APPEND TTSClient_SOURCES TTSClientPrivateFirebolt.cpp)
+    if(USE_NATIVE_FIREBOLT_SDK)
+        list(APPEND TTSClient_SOURCES TTSClientPrivateNativeFirebolt.cpp)
+    else()
+        list(APPEND TTSClient_SOURCES TTSClientPrivateFirebolt.cpp)
+    endif()
 endif()
 
 add_library(TTSClient SHARED ${TTSClient_SOURCES})
@@ -60,12 +69,21 @@ if(TTS_DEFAULT_BACKEND)
 endif()
 
 if(TTS_DEFAULT_BACKEND STREQUAL "firebolt")
-    target_link_libraries(TextToSpeechServiceClient PUBLIC
-        ${WPEFRAMEWORK_PLUGINS_LIBRARIES}
-        ${WPEFRAMEWORK_SECURITYUTIL_LIBRARIES}
-        -lpthread
-        FireboltSDK
-    )
+    if(USE_NATIVE_FIREBOLT_SDK)
+        target_link_libraries(TextToSpeechServiceClient PUBLIC
+            ${WPEFRAMEWORK_PLUGINS_LIBRARIES}
+            ${WPEFRAMEWORK_SECURITYUTIL_LIBRARIES}
+            -lpthread
+            FireboltClient
+        )
+    else()
+        target_link_libraries(TextToSpeechServiceClient PUBLIC
+            ${WPEFRAMEWORK_PLUGINS_LIBRARIES}
+            ${WPEFRAMEWORK_SECURITYUTIL_LIBRARIES}
+            -lpthread
+            FireboltSDK
+        )
+    endif()
 else()
     target_link_libraries(TextToSpeechServiceClient PUBLIC
         ${WPEFRAMEWORK_PLUGINS_LIBRARIES}
