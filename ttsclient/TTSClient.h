@@ -48,6 +48,13 @@ struct SpeechData {
     bool secure;
     uint32_t id;
     std::string text;
+#ifdef USE_NATIVE_FIREBOLT_SDK
+    double volume;
+    double rate;
+    std::string lang;
+    std::string voice;
+    double pitch;
+#endif //USE_NATIVE_FIREBOLT_SDK
 };
 
 class TTSConnectionCallback {
