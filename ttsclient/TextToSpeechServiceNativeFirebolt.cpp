@@ -156,8 +156,8 @@ void TextToSpeechServiceFirebolt::onVoicesChanged( const std::pmr::vector<Firebo
         {
             TTSLOG_INFO("Received VoiceChanged \"%s\"", voice.name);
         }
-        const Firebolt::SpeechSynthesis::Voice& changedVoice = voices.front();
-        TextToSpeechServiceFirebolt::Instance()->dispatchEvent(EventType::voiceChange, std::nullopt, std::nullopt, changedVoice.name);
+        std::pmr::vector<Firebolt::SpeechSynthesis::Voice> changedVoices = voices;
+        TextToSpeechServiceFirebolt::Instance()->dispatchEvent(EventType::voiceChange, std::nullopt, std::nullopt, changedVoices);
     }
 }
 
@@ -239,18 +239,18 @@ void TextToSpeechServiceFirebolt::UnsubscribeVoiceGuidanceEvents()
     }
 }
 
-void TextToSpeechServiceFirebolt::dispatchEvent(EventType event, const std::optional<int32_t>& speechId,const std::optional<bool>& ttsstatus,const std::optional<std::string>& voices)
+void TextToSpeechServiceFirebolt::dispatchEvent(EventType event, const std::optional<int32_t>& speechId,const std::optional<bool>& ttsstatus,const std::optional<std::pmr::vector<Firebolt::SpeechSynthesis::Voice>>& voices)
 {
     int speechid = 0;
     bool enabled = false;
-    std::string voice;
+    std::pmr::vector<Firebolt::SpeechSynthesis::Voice> voice;
 
     if(event == stateChange) {
         enabled = ttsstatus.value();
         TTSLOG_INFO("%s(StateChange), state=%s", __FUNCTION__, enabled ? "enabled" : "disabled");
     } else if (event == voiceChange) {
         voice = voices.value();
-        TTSLOG_INFO("%s(VoiceChange), voice=%s", __FUNCTION__, voice.c_str());
+        TTSLOG_INFO("%s(VoiceChange)", __FUNCTION__);
     } else {
         speechid = speechId.value();
         TTSLOG_INFO("%s(SpeechEvent-%d), servicespeecid=%d", __FUNCTION__, (int)event, speechid);
@@ -293,7 +293,7 @@ bool TextToSpeechServiceFirebolt::isEnabled(bool &enable)
     return true;
 }
 
-bool TextToSpeechServiceFirebolt::listVoices(std::string &, std::vector<std::string> &voices) {
+bool TextToSpeechServiceFirebolt::listVoices(std::pmr::vector<Firebolt::SpeechSynthesis::Voice> &voices) {
     auto result = Firebolt::IFireboltAccessor::Instance().SpeechSynthesisInterface().voices();
     if (!result) {
         TTSLOG_ERROR("Failed to get voice list");
@@ -304,9 +304,7 @@ bool TextToSpeechServiceFirebolt::listVoices(std::string &, std::vector<std::str
         TTSLOG_ERROR("voice list is empty");
         return false;
     }
-    for (const auto &voice : voiceList) {
-        voices.push_back(voice.name);
-    }
+    voices = voiceList;
     return true;
 }
 

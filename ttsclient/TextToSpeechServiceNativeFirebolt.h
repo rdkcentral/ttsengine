@@ -48,7 +48,7 @@ class TextToSpeechServiceFirebolt{
 public:
     struct Client {
         virtual void onTTSStateChange(bool /*enabled*/) {};
-        virtual void onVoiceChange(std::string /*voice*/) {};
+        virtual void onVoiceChange(std::pmr::vector<Firebolt::SpeechSynthesis::Voice> /*voices*/) {};
         virtual void onSpeechStart(uint32_t /*speeechId*/) {};
         virtual void onSpeechPause(uint32_t /*speeechId*/) {};
         virtual void onSpeechResume(uint32_t /*speeechId*/) {};
@@ -74,7 +74,7 @@ public:
     bool isEnabled(bool &enable);
     void registerClient(Client* client);
     void unregisterClient(Client* client);
-    bool listVoices(std::string &language, std::vector<std::string> &voices);
+    bool listVoices(std::pmr::vector<Firebolt::SpeechSynthesis::Voice> &voices);
     bool speak(std::string &callsign, uint32_t &speechid, std::string text, std::optional<double> rate = std::nullopt, std::optional<double> volume = std::nullopt, std::optional<double> pitch = std::nullopt, \
         std::optional<std::string> lang = std::nullopt, std::optional<std::string> voice = std::nullopt);
     bool pause(uint32_t &speechid);
@@ -99,7 +99,8 @@ private:
     void onUtteranceEvent( const Firebolt::SpeechSynthesis::UtteranceEvent& event);
     void onVGStateChanged(const Firebolt::Accessibility::VoiceGuidanceSettings& vgSettings);
 
-    void dispatchEvent(EventType event, const std::optional<int32_t>& speechid,const std::optional<bool>& ttsstatus,const std::optional<std::string>& voice);
+    void dispatchEvent(EventType event, const std::optional<int32_t>& speechid, const std::optional<bool>& ttsstatus,\
+        const std::optional<std::pmr::vector<Firebolt::SpeechSynthesis::Voice>>& voice);
 
     bool m_connected;
         

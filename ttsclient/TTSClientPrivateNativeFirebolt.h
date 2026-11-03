@@ -112,7 +112,8 @@ public:
     ~TTSClientPrivateFirebolt();
 
      // TTS Global APIs
-    TTS_Error listVoices(std::string &language, std::vector<std::string> &voices) override;
+    TTS_Error listVoices(std::string &, std::vector<std::string> &) override { return TTS_OK; }
+    TTS_Error listVoices(std::pmr::vector<Voice> &voices) override;
     bool isTTSEnabled(bool forcefetch) override;
     bool isSessionActiveForApp(uint32_t) override { return true; }
 
@@ -137,7 +138,7 @@ public:
     TTS_Error abort(uint32_t sessionId, bool clearPending) override;
 
     void onTTSStateChange(bool enabled) override;
-    void onVoiceChange(std::string voice) override;
+    void onVoiceChange(std::pmr::vector<Firebolt::SpeechSynthesis::Voice> voices) override;
     void onSpeechStart(uint32_t speeechId) override;
     void onSpeechPause(uint32_t speeechId) override;
     void onSpeechResume(uint32_t speeechId) override;
@@ -169,3 +170,4 @@ private:
 };
 
 }
+    

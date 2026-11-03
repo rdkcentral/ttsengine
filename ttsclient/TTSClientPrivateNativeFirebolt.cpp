@@ -99,10 +99,19 @@ TTS_Error TTSClientPrivateFirebolt::pause(uint32_t sessionId, uint32_t speechId)
     return TTS_OK;
 }
 
-TTS_Error TTSClientPrivateFirebolt::listVoices(std::string &language, std::vector<std::string> &voices) {
-    if(!TextToSpeechServiceFirebolt::Instance()->listVoices(language,voices)) {
+TTS_Error TTSClientPrivateFirebolt::listVoices(std::pmr::vector<Voice> &voices) {
+    std::pmr::vector<Firebolt::SpeechSynthesis::Voice> voiceList;
+    if(!TextToSpeechServiceFirebolt::Instance()->listVoices(voiceList)) {
         TTSLOG_ERROR("Couldn't retrieve voice list");
         return TTS_FAIL;
+    }
+    voices.clear();
+    for (const auto &v : voiceList) {
+        Voice voice;
+        voice.name = v.name;
+        voice.lang = v.lang;
+        voice._default = v._default;
+        voices.push_back(voice);
     }
     return TTS_OK;
 }
@@ -208,10 +217,19 @@ void TTSClientPrivateFirebolt::onTTSStateChange(bool enabled) {
     }
 }
 
-void TTSClientPrivateFirebolt::onVoiceChange(std::string voice) {
+void TTSClientPrivateFirebolt::onVoiceChange(std::pmr::vector<Firebolt::SpeechSynthesis::Voice> newVoices) {
     if(m_connectionCallback) {
-        TTSLOG_INFO("Got voice_changed event from TTS Manager %p, new voice = %s", this, voice.c_str());
-        m_connectionCallback->onVoiceChanged(voice);
+        TTSLOG_INFO("Got voice_changed event from TTS Manager %p, new voice count = %zu", this, newVoices.size());
+        std::pmr::vector<Voice> voices;
+        voices.clear();
+        for (const auto &v : newVoices) {
+            Voice voice;
+            voice.name = v.name;
+            voice.lang = v.lang;
+            voice._default = v._default;
+            voices.push_back(voice);
+        }
+        m_connectionCallback->onVoiceChanged(voices);
     }
 }
 

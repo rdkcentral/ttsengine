@@ -151,6 +151,12 @@ TTS_Error TTSClient::listVoices(std::string language, std::vector<std::string> &
     return m_priv->listVoices(language, voices);
 }
 
+TTS_Error TTSClient::listVoices(std::pmr::vector<Voice> &voices) {
+    CHECK_PRIV();
+    return m_priv->listVoices(voices);
+}
+
+
 TTS_Error TTSClient::setTTSConfiguration(Configuration &config) {
     CHECK_PRIV();
     return m_priv->setTTSConfiguration(config);
