@@ -22,6 +22,7 @@
 #include "TTSCommon.h"
 
 #include <iostream>
+#include <memory_resource>
 #include <vector>
 
 namespace TTS {
@@ -48,6 +49,18 @@ struct SpeechData {
     bool secure;
     uint32_t id;
     std::string text;
+    double volume;
+    double rate;
+    std::string lang;
+    std::string voice;
+    double pitch;
+};
+
+struct Voice
+{
+    std::string name;
+    std::string lang;
+    bool _default;
 };
 
 class TTSConnectionCallback {
@@ -59,6 +72,7 @@ public:
     virtual void onTTSServerClosed() {}
     virtual void onTTSStateChanged(bool enabled) { (void)enabled; }
     virtual void onVoiceChanged(std::string voice) { (void)voice; }
+    virtual void onVoiceChanged(std::pmr::vector<Voice> voices) { (void)voices; }
 };
 
 class TTSSessionCallback {
@@ -103,6 +117,7 @@ public:
     // TTS Global APIs
     TTS_Error enableTTS(bool enable=true);
     TTS_Error listVoices(std::string language, std::vector<std::string> &voices);
+    TTS_Error listVoices(std::pmr::vector<Voice> &voices);
     TTS_Error setTTSConfiguration(Configuration &config);
     TTS_Error getTTSConfiguration(Configuration &config);
     bool isTTSEnabled(bool forcefetch=false);
