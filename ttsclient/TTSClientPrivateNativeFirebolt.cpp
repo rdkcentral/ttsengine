@@ -156,9 +156,10 @@ TTS_Error TTSClientPrivateFirebolt::speak(uint32_t sessionId, SpeechData& data) 
         return TTS_NOT_ENABLED;
     }
     m_lastSpeechId = 0;
-    if(!TextToSpeechServiceFirebolt::Instance()->speak(m_callsign, m_lastSpeechId, data.text, data.rate == 0 ? std::optional<double>{} : std::optional<double>{data.rate}, \
-        data.volume == 0 ? std::optional<double>{} : std::optional<double>{data.volume}, \
-        data.pitch == 0 ? std::optional<double>{} : std::optional<double>{data.pitch}, \
+    printf("kykumar ttsclient speak rate %f vol %f pitch %f\n", data.rate, data.volume, data.pitch);
+    if(!TextToSpeechServiceFirebolt::Instance()->speak(m_callsign, m_lastSpeechId, data.text, data.rate <= 0 ? std::optional<double>{} : std::optional<double>{data.rate}, \
+        data.volume <= 0 ? std::optional<double>{} : std::optional<double>{data.volume}, \
+        data.pitch <= 0 ? std::optional<double>{} : std::optional<double>{data.pitch}, \
         data.lang.empty()? std::nullopt : std::optional<std::string>{data.lang}, \
         data.voice.empty()? std::nullopt : std::optional<std::string>{data.voice})) {
             return TTS_FAIL;

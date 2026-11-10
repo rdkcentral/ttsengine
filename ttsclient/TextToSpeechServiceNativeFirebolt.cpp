@@ -305,6 +305,9 @@ bool TextToSpeechServiceFirebolt::listVoices(std::pmr::vector<Firebolt::SpeechSy
         return false;
     }
     voices = voiceList;
+    for (const auto& voice : voiceList) {
+        printf("kykumar Voice %s, Lang %s, Def%s\n", voice.name.c_str(), voice.lang.c_str(), voice._default ? "true" : "false");
+    }
     return true;
 }
 
@@ -315,6 +318,33 @@ bool TextToSpeechServiceFirebolt::speak(std::string &, uint32_t &speechid, std::
        TTSLOG_ERROR("Firebolt is not active (or) channel is couldn't be opened");
        return false;
     }
+    printf("kykumar speechid : %u, text : %s\n", speechid, text.c_str());
+
+    if (rate.has_value())
+        printf("kykumar rate     : %f\n", rate.value());
+    else
+        printf("kykumar rate     : not provided\n");
+
+    if (vol.has_value())
+        printf("kykumar volume   : %f\n", vol.value());
+    else
+        printf("kykumar volume   : not provided\n");
+
+    if (pitch.has_value())
+        printf("kykumar pitch    : %f\n", pitch.value());
+    else
+        printf("kykumar pitch    : not provided\n");
+
+    if (lang.has_value())
+        printf("kykumar language : %s\n", lang->c_str());
+    else
+        printf("kykumar language : not provided\n");
+
+    if (voice.has_value())
+        printf("kykumar voice    : %s\n", voice->c_str());
+    else
+        printf("kykumar voice    : not provided\n");
+    
     auto result = Firebolt::IFireboltAccessor::Instance().SpeechSynthesisInterface().speak(text, lang, voice, vol, rate, pitch, std::nullopt);
     if (!result) {
     TTSLOG_ERROR("Firebolt speak request failed");
@@ -322,7 +352,7 @@ bool TextToSpeechServiceFirebolt::speak(std::string &, uint32_t &speechid, std::
     }
 
     speechid = *result;
-    TTSLOG_INFO("firebolt speak returned %d\n", speechid);
+    TTSLOG_INFO("kykumar firebolt speak returned %d\n", speechid);
     return true;
 }
 
