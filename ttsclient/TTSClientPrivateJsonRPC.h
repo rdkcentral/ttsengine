@@ -110,6 +110,7 @@ public:
 
     // TTS Global APIs
     TTS_Error enableTTS(bool enable) override;
+    TTS_Error listVoices(std::pmr::vector<Voice> &) override { return TTS_OK; }
     TTS_Error listVoices(std::string &language, std::vector<std::string> &voices) override;
     TTS_Error setTTSConfiguration(Configuration &config) override;
     TTS_Error getTTSConfiguration(Configuration &config) override;

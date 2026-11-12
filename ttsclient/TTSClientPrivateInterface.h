@@ -30,6 +30,7 @@ public:
     // TTS Global APIs
     virtual TTS_Error enableTTS(bool enable) = 0;
     virtual TTS_Error listVoices(std::string &language, std::vector<std::string> &voices) = 0;
+    virtual TTS_Error listVoices(std::pmr::vector<Voice> &voices) =0;
     virtual TTS_Error setTTSConfiguration(Configuration &config) = 0;
     virtual TTS_Error getTTSConfiguration(Configuration &config) = 0;
     virtual bool isTTSEnabled(bool forcefetch=false) = 0;
