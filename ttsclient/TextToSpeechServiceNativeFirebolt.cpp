@@ -306,7 +306,7 @@ bool TextToSpeechServiceFirebolt::listVoices(std::pmr::vector<Firebolt::SpeechSy
     }
     voices = voiceList;
     for (const auto& voice : voiceList) {
-        printf("kykumar Voice %s, Lang %s, Def%s\n", voice.name.c_str(), voice.lang.c_str(), voice._default ? "true" : "false");
+        TTSLOG_INFO("rcvd list Voice %s, Lang %s, Def%s\n", voice.name.c_str(), voice.lang.c_str(), voice._default ? "true" : "false");
     }
     return true;
 }
@@ -318,32 +318,12 @@ bool TextToSpeechServiceFirebolt::speak(std::string &, uint32_t &speechid, std::
        TTSLOG_ERROR("Firebolt is not active (or) channel is couldn't be opened");
        return false;
     }
-    printf("kykumar speechid : %u, text : %s\n", speechid, text.c_str());
-
-    if (rate.has_value())
-        printf("kykumar rate     : %f\n", rate.value());
-    else
-        printf("kykumar rate     : not provided\n");
-
-    if (vol.has_value())
-        printf("kykumar volume   : %f\n", vol.value());
-    else
-        printf("kykumar volume   : not provided\n");
-
-    if (pitch.has_value())
-        printf("kykumar pitch    : %f\n", pitch.value());
-    else
-        printf("kykumar pitch    : not provided\n");
-
-    if (lang.has_value())
-        printf("kykumar language : %s\n", lang->c_str());
-    else
-        printf("kykumar language : not provided\n");
-
-    if (voice.has_value())
-        printf("kykumar voice    : %s\n", voice->c_str());
-    else
-        printf("kykumar voice    : not provided\n");
+    TTSLOG_INFO("requested txt: %s rate: %s, volume: %s, pitch: %s, language: %s, voice: %s\n", text,
+       rate.has_value()  ? std::to_string(rate.value()).c_str()  : "not provided",
+       vol.has_value()   ? std::to_string(vol.value()).c_str()   : "not provided",
+       pitch.has_value() ? std::to_string(pitch.value()).c_str() : "not provided",
+       lang.has_value()  ? lang->c_str()  : "not provided",
+       voice.has_value() ? voice->c_str() : "not provided");
     
     auto result = Firebolt::IFireboltAccessor::Instance().SpeechSynthesisInterface().speak(text, lang, voice, vol, rate, pitch, std::nullopt);
     if (!result) {

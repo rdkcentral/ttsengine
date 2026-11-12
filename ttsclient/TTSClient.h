@@ -42,8 +42,8 @@ struct Configuration {
 };
 
 struct SpeechData {
-    SpeechData() : secure(true), id(0), volume(0.0), rate(0.0), pitch(0.0) {}
-    SpeechData(uint32_t i) : secure(true), id(i), volume(0.0), rate(0.0), pitch(0.0) {}
+    SpeechData() : secure(true), id(0), volume(0.0), rate(0.0), pitch(0.0), lang(""), voice("") {}
+    SpeechData(uint32_t i) : secure(true), id(i), volume(0.0), rate(0.0), pitch(0.0), lang(""), voice("") {}
     ~SpeechData() {}
 
     bool secure;
