@@ -99,6 +99,20 @@ TTS_Error TTSClientPrivateFirebolt::pause(uint32_t sessionId, uint32_t speechId)
     return TTS_OK;
 }
 
+TTS_Error TTSClientPrivateFirebolt::listVoices(std::string &, std::vector<std::string> &voices) {
+    /* ignore language since this function will be deprecated */
+    std::pmr::vector<Firebolt::SpeechSynthesis::Voice> voiceList;
+    if(!TextToSpeechServiceFirebolt::Instance()->listVoices(voiceList)) {
+        TTSLOG_ERROR("Couldn't retrieve voice list");
+        return TTS_FAIL;
+    }
+    voices.clear();
+    for (const auto &v : voiceList) {
+            voices.push_back(v.name);
+    }
+    return TTS_OK;
+}
+
 TTS_Error TTSClientPrivateFirebolt::listVoices(std::pmr::vector<Voice> &voices) {
     std::pmr::vector<Firebolt::SpeechSynthesis::Voice> voiceList;
     if(!TextToSpeechServiceFirebolt::Instance()->listVoices(voiceList)) {

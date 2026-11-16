@@ -112,7 +112,7 @@ public:
     ~TTSClientPrivateFirebolt();
 
      // TTS Global APIs
-    TTS_Error listVoices(std::string &, std::vector<std::string> &) override { return TTS_OK; }
+    TTS_Error listVoices(std::string &language, std::vector<std::string> &voices) override;
     TTS_Error listVoices(std::pmr::vector<Voice> &voices) override;
     bool isTTSEnabled(bool forcefetch) override;
     bool isSessionActiveForApp(uint32_t) override { return true; }
