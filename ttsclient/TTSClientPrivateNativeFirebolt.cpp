@@ -275,7 +275,7 @@ void TTSClientPrivateFirebolt::onSpeechResume(uint32_t serviceSpeechId) {
 void TTSClientPrivateFirebolt::onSpeechCancel(uint32_t serviceSpeechId) {
     uint32_t clientSpeechId = m_requestedSpeeches.removeServiceId(serviceSpeechId);
     if(clientSpeechId && m_sessionCallback) {
-        TTSLOG_INFO("Got cancelled event from session %u, speech id %u", DEFAULT_SESSION_ID);
+        TTSLOG_INFO("Got cancelled event from session %u, speech id %u", DEFAULT_SESSION_ID, clientSpeechId);
         m_sessionCallback->onSpeechCancelled(m_appId, DEFAULT_SESSION_ID, clientSpeechId);
     }
 }
