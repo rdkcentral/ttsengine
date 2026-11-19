@@ -20,7 +20,11 @@
 #include "TTSClientPrivateCOMRPC.h"
 #include "TTSClientPrivateJsonRPC.h"
 #ifdef TTS_DEFAULT_BACKEND_FIREBOLT
+#ifdef USE_NATIVE_FIREBOLT_SDK
+#include "TTSClientPrivateNativeFirebolt.h"
+#else
 #include "TTSClientPrivateFirebolt.h"
+#endif
 #endif
 #include "logger.h"
 #include <mutex>
@@ -146,6 +150,12 @@ TTS_Error TTSClient::listVoices(std::string language, std::vector<std::string> &
     CHECK_PRIV();
     return m_priv->listVoices(language, voices);
 }
+
+TTS_Error TTSClient::listVoices(std::pmr::vector<Voice> &voices) {
+    CHECK_PRIV();
+    return m_priv->listVoices(voices);
+}
+
 
 TTS_Error TTSClient::setTTSConfiguration(Configuration &config) {
     CHECK_PRIV();
