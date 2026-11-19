@@ -51,14 +51,14 @@ void TextToSpeechServiceFirebolt::initialize() {
             return;
         }
         std::unique_lock<std::mutex> lock(mtx);
-	/*Wait Time is 500 millisecond*/
-        if (cv.wait_for(lock, std::chrono::milliseconds(500), [this] { return isConnected; })) {
+	    /*Wait Time is 3000 millisecond since we are waiting for 3000 ms iduring firebolt connection*/
+        if (cv.wait_for(lock, std::chrono::milliseconds(3000), [this] { return isConnected; })) {
             m_connected = true;
             SubscribeVoiceGuidanceEvents();
-            TTSLOG_INFO("Firebolt Core Intiailized URL: [%s]", url.c_str());
+            TTSLOG_INFO("Firebolt Core Initialized URL: [%s]", url.c_str());
 	    }
 	    else {
-	        TTSLOG_ERROR("Firebolt Core Intiailized URL: [%s] Failed(Timeout)", url.c_str());
+	        TTSLOG_ERROR("Firebolt Core Initialized URL: [%s] Failed(connected event not received)", url.c_str());
 	    }
     }
     else {
@@ -69,6 +69,7 @@ void TextToSpeechServiceFirebolt::initialize() {
 void TextToSpeechServiceFirebolt::deinitialize() {
     UnsubscribeVoiceGuidanceEvents();
     destroyFireboltInstance();
+    m_connected = false;
     isConnected = false;
     TTSLOG_INFO("Firebolt Core deinitialized");
 }
@@ -140,12 +141,18 @@ bool TextToSpeechServiceFirebolt::isActive(bool /*force*/){
 void TextToSpeechServiceFirebolt::onUtteranceEvent( const Firebolt::SpeechSynthesis::UtteranceEvent& event)
 {
     TTSLOG_INFO("Utterance event %d received: speechId=%d ", event.event, event.utteranceId);
-    TextToSpeechServiceFirebolt::Instance()->dispatchEvent((EventType)event.event, event.utteranceId, std::nullopt, std::nullopt);
+    FireboltEvents fireboltEvent;
+    fireboltEvent.ttsEvent = std::nullopt;
+    fireboltEvent.utteranceEvent = event.event;
+    TextToSpeechServiceFirebolt::Instance()->dispatchEvent(fireboltEvent, event.utteranceId, std::nullopt, std::nullopt);
 }
 
 void TextToSpeechServiceFirebolt::onVGStateChanged( const Firebolt::Accessibility::VoiceGuidanceSettings& vgSettings)
 {
-    TextToSpeechServiceFirebolt::Instance()->dispatchEvent(EventType::stateChange, std::nullopt, vgSettings.enabled, std::nullopt);
+    FireboltEvents fireboltEvent;
+    fireboltEvent.ttsEvent = FireboltEvents::stateChange;
+    fireboltEvent.utteranceEvent = std::nullopt;
+    TextToSpeechServiceFirebolt::Instance()->dispatchEvent(fireboltEvent, std::nullopt, vgSettings.enabled, std::nullopt);
 }
 
 
@@ -154,10 +161,13 @@ void TextToSpeechServiceFirebolt::onVoicesChanged( const std::pmr::vector<Firebo
     if (!voices.empty()) {
         for (const Firebolt::SpeechSynthesis::Voice& voice : voices)
         {
-            TTSLOG_INFO("Received VoiceChanged \"%s\"", voice.name);
+            TTSLOG_INFO("Received VoiceChanged \"%s\"", voice.name.c_str());
         }
+         FireboltEvents fireboltEvent;
+        fireboltEvent.ttsEvent = FireboltEvents::voiceChange;
+        fireboltEvent.utteranceEvent = std::nullopt;
         std::pmr::vector<Firebolt::SpeechSynthesis::Voice> changedVoices = voices;
-        TextToSpeechServiceFirebolt::Instance()->dispatchEvent(EventType::voiceChange, std::nullopt, std::nullopt, changedVoices);
+        TextToSpeechServiceFirebolt::Instance()->dispatchEvent(fireboltEvent, std::nullopt, std::nullopt, changedVoices);
     }
 }
 
@@ -175,7 +185,7 @@ void TextToSpeechServiceFirebolt::SubscribeVoiceGuidanceEvents()
     if(id)
     {
         onVoiceChangedSubId = *id;
-        TTSLOG_INFO("Subscribe Event for Voice change Sucessfull");
+        TTSLOG_INFO("Subscribe Event for Voice change Sucessful");
     }
     else
     {
@@ -190,7 +200,7 @@ void TextToSpeechServiceFirebolt::SubscribeVoiceGuidanceEvents()
     if(id)
     {
         onUtteranceEventSubId = *id;
-        TTSLOG_INFO("Subscribe Event for utterance Sucessfull");
+        TTSLOG_INFO("Subscribe Event for utterance Successful");
     }
     else
     {
@@ -205,7 +215,7 @@ void TextToSpeechServiceFirebolt::SubscribeVoiceGuidanceEvents()
     if(id)
     {
         onVGStateChangedSubId = *id;
-        TTSLOG_INFO("Subscribe Event for Voice Guidance Settings Sucessfull");
+        TTSLOG_INFO("Subscribe Event for Voice Guidance Settings Successful");
     }
     else
     {
@@ -239,40 +249,78 @@ void TextToSpeechServiceFirebolt::UnsubscribeVoiceGuidanceEvents()
     }
 }
 
-void TextToSpeechServiceFirebolt::dispatchEvent(EventType event, const std::optional<int32_t>& speechId,const std::optional<bool>& ttsstatus,const std::optional<std::pmr::vector<Firebolt::SpeechSynthesis::Voice>>& voices)
+void TextToSpeechServiceFirebolt::dispatchEvent(const FireboltEvents& event, const std::optional<int32_t>& speechId,\
+        const std::optional<bool>& ttsstatus, const std::optional<std::pmr::vector<Firebolt::SpeechSynthesis::Voice>>& voices)
 {
-    int speechid = 0;
-    bool enabled = false;
-    std::pmr::vector<Firebolt::SpeechSynthesis::Voice> voice;
-
-    if(event == stateChange) {
-        enabled = ttsstatus.value();
-        TTSLOG_INFO("%s(StateChange), state=%s", __FUNCTION__, enabled ? "enabled" : "disabled");
-    } else if (event == voiceChange) {
-        voice = voices.value();
-        TTSLOG_INFO("%s(VoiceChange)", __FUNCTION__);
-    } else {
-        speechid = speechId.value();
-        TTSLOG_INFO("%s(SpeechEvent-%d), servicespeecid=%d", __FUNCTION__, (int)event, speechid);
+    ClientList currentClients;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        currentClients = m_clients;
     }
-    if(connected()) {
-        std::unique_lock<std::mutex> lock(m_mutex);
-        for(ClientList::iterator it = m_clients.begin(); it != m_clients.end(); ++it) {
-            switch(event) {
-                case synthesisStarting: break;
-                case playbackStarting: ((TextToSpeechServiceFirebolt::Client*)(*it))->onSpeechStart(speechid);break;
-                case paused: ((TextToSpeechServiceFirebolt::Client*)(*it))->onSpeechPause(speechid); break;
-                case resumed: ((TextToSpeechServiceFirebolt::Client*)(*it))->onSpeechResume(speechid); break;
-                case completed: ((TextToSpeechServiceFirebolt::Client*)(*it))->onSpeechComplete(speechid); break;
-                case interrupted: ((TextToSpeechServiceFirebolt::Client*)(*it))->onSpeechInterrupt(speechid); break;
-                case networkFailed: ((TextToSpeechServiceFirebolt::Client*)(*it))->onNetworkError(speechid); break;
-                case synthesisFailed: break;
-                case playbackFailed: ((TextToSpeechServiceFirebolt::Client*)(*it))->onPlaybackError(speechid); break;
-                case stateChange: ((TextToSpeechServiceFirebolt::Client*)(*it))->onTTSStateChange(enabled); break;
-                case voiceChange: ((TextToSpeechServiceFirebolt::Client*)(*it))->onVoiceChange(voice); break;
+    if (currentClients.empty()) {
+        TTSLOG_ERROR("No clients registered in ttsclient to dispatch events");
+        return;
+    }
+    if (event.ttsEvent.has_value()){
+        switch (event.ttsEvent.value()){
+            case FireboltEvents::stateChange:{
+                if (!ttsstatus.has_value()) {
+                    TTSLOG_ERROR("Missing TTS status for stateChange event");
+                    return;
+                }
+                bool enabled = ttsstatus.value();
+                TTSLOG_INFO("%s(StateChange), state=%s",__FUNCTION__, enabled ? "enabled" : "disabled");
+                for (const auto& client : currentClients) {
+                    if (client) {
+                        auto clientPtr =static_cast<TextToSpeechServiceFirebolt::Client*>(client);
+                        clientPtr->onTTSStateChange(enabled);
+                    }
+                }
+                break;
+            }
+
+            case FireboltEvents::voiceChange:{
+                if (!voices.has_value()) {
+                    TTSLOG_ERROR("Missing voices for voiceChange event");
+                    return;
+                }
+                TTSLOG_INFO("%s(VoiceChange)", __FUNCTION__);
+                for (const auto& client : currentClients) {
+                    if (client) {
+                        auto clientPtr =static_cast<TextToSpeechServiceFirebolt::Client*>(client);
+                        clientPtr->onVoiceChange(voices.value());
+                    }
+                }
+                break;
             }
         }
     }
+    else if(event.utteranceEvent.has_value()){
+        if (!speechId.has_value()) {
+            TTSLOG_ERROR("Missing speech ID for utterance event");
+            return;
+        }
+        int speechid = speechId.value();
+        TTSLOG_INFO("%s(SpeechEvent-%d), servicespeecid=%d", __FUNCTION__, (int)event.utteranceEvent.value(), speechid);
+        for(const auto& client : currentClients) {
+            if(client) {
+                auto clientPtr = static_cast<TextToSpeechServiceFirebolt::Client*>(client);
+                switch(event.utteranceEvent.value()) {
+                    case Firebolt::SpeechSynthesis::UtteranceEventEnum::synthesisStarting: break;
+                    case Firebolt::SpeechSynthesis::UtteranceEventEnum::playbackStarting: clientPtr->onSpeechStart(speechid);break;
+                    case Firebolt::SpeechSynthesis::UtteranceEventEnum::paused: clientPtr->onSpeechPause(speechid); break;
+                    case Firebolt::SpeechSynthesis::UtteranceEventEnum::resumed: clientPtr->onSpeechResume(speechid); break;
+                    case Firebolt::SpeechSynthesis::UtteranceEventEnum::completed: clientPtr->onSpeechComplete(speechid); break;
+                    case Firebolt::SpeechSynthesis::UtteranceEventEnum::interrupted: clientPtr->onSpeechInterrupt(speechid); break;
+                    case Firebolt::SpeechSynthesis::UtteranceEventEnum::networkFailed: clientPtr->onNetworkError(speechid); break;
+                    case Firebolt::SpeechSynthesis::UtteranceEventEnum::synthesisFailed: break;
+                    case Firebolt::SpeechSynthesis::UtteranceEventEnum::playbackFailed: clientPtr->onPlaybackError(speechid); break;
+                }
+            }
+        }
+    }
+    else
+        TTSLOG_ERROR("%s: No valid event received", __FUNCTION__);
 }
 
 bool TextToSpeechServiceFirebolt::isEnabled(bool &enable)
@@ -318,7 +366,7 @@ bool TextToSpeechServiceFirebolt::speak(std::string &, uint32_t &speechid, std::
        TTSLOG_ERROR("Firebolt is not active (or) channel is couldn't be opened");
        return false;
     }
-    TTSLOG_INFO("requested txt: %s rate: %s, volume: %s, pitch: %s, language: %s, voice: %s\n", text,
+    TTSLOG_INFO("requested txt: %s rate: %s, volume: %s, pitch: %s, language: %s, voice: %s\n", text.c_str(),
        rate.has_value()  ? std::to_string(rate.value()).c_str()  : "not provided",
        vol.has_value()   ? std::to_string(vol.value()).c_str()   : "not provided",
        pitch.has_value() ? std::to_string(pitch.value()).c_str() : "not provided",

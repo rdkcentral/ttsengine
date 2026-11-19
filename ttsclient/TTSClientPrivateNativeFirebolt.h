@@ -51,40 +51,44 @@ public:
 
     uint32_t getServiceId(uint32_t clientid) {
         std::lock_guard<std::mutex> lock(m_mutex);
-        for(auto it = m_map.begin(); it != m_map.end(); ++it)
-            if(it->first == clientid)
-                return it->second;
+        auto it = m_map.find(clientid);
+        if(it != m_map.end())
+            return it->second;
         return 0;
     }
 
     uint32_t getClientId(uint32_t serviceid) {
         std::lock_guard<std::mutex> lock(m_mutex);
-        for(auto it = m_map.begin(); it != m_map.end(); ++it)
-            if(it->second == serviceid)
-                return it->first;
+        for (const auto& it : m_map)
+            if(it.second == serviceid)
+                return it.first;
         return 0;
     }
 
     uint32_t removeClientId(uint32_t clientid) {
         std::lock_guard<std::mutex> lock(m_mutex);
-        for(auto it = m_map.begin(); it != m_map.end(); ++it) {
-            if(it->first == clientid) {
-                uint32_t serviceid = it->second;
-                m_map.erase(it);
-                return serviceid;
-            }
+        auto it = m_map.find(clientid);
+        if (it != m_map.end()) {
+            uint32_t serviceid = it->second;
+            m_map.erase(it);
+            return serviceid;
         }
+
         return 0;
     }
 
     uint32_t removeServiceId(uint32_t serviceid) {
         std::lock_guard<std::mutex> lock(m_mutex);
-        for(auto it = m_map.begin(); it != m_map.end(); ++it) {
-            if(it->second == serviceid) {
-                uint32_t clientid = it->first;
-                m_map.erase(it);
-                return clientid;
-            }
+
+        auto it = std::find_if(m_map.begin(), m_map.end(),
+        [serviceid](const auto& entry) {
+            return entry.second == serviceid;
+        });
+
+        if (it != m_map.end()) {
+            uint32_t clientid = it->first;
+            m_map.erase(it);
+            return clientid;
         }
         return 0;
     }

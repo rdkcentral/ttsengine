@@ -234,16 +234,7 @@ void TTSClientPrivateFirebolt::onTTSStateChange(bool enabled) {
 void TTSClientPrivateFirebolt::onVoiceChange(std::pmr::vector<Firebolt::SpeechSynthesis::Voice> newVoices) {
     if(m_connectionCallback) {
         TTSLOG_INFO("Got voice_changed event from TTS Manager %p, new voice count = %zu", this, newVoices.size());
-        std::pmr::vector<Voice> voices;
-        voices.clear();
-        for (const auto &v : newVoices) {
-            Voice voice;
-            voice.name = v.name;
-            voice.lang = v.lang;
-            voice._default = v._default;
-            voices.push_back(voice);
-        }
-        m_connectionCallback->onVoiceChanged(voices);
+        m_connectionCallback->onVoiceChanged(newVoices[0].name); /* currently sending only the first voice */
     }
 }
 

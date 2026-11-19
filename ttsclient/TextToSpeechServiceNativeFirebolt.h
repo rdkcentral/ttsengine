@@ -30,20 +30,16 @@ namespace TTSFirebolt{
 
 class TextToSpeechServiceFirebolt{
 
+struct FireboltEvents
+{
     enum EventType
     {
-        synthesisStarting,
-        playbackStarting,
-        paused,
-        resumed,
-        completed,
-        interrupted,
-        networkFailed,
-        synthesisFailed,
-        playbackFailed,
         stateChange,
         voiceChange
     };
+    std::optional<EventType> ttsEvent;
+    std::optional<Firebolt::SpeechSynthesis::UtteranceEventEnum> utteranceEvent;
+};
 
 public:
     struct Client {
@@ -99,8 +95,8 @@ private:
     void onUtteranceEvent( const Firebolt::SpeechSynthesis::UtteranceEvent& event);
     void onVGStateChanged(const Firebolt::Accessibility::VoiceGuidanceSettings& vgSettings);
 
-    void dispatchEvent(EventType event, const std::optional<int32_t>& speechid, const std::optional<bool>& ttsstatus,\
-        const std::optional<std::pmr::vector<Firebolt::SpeechSynthesis::Voice>>& voice);
+    void dispatchEvent(const FireboltEvents& event, const std::optional<int32_t>& speechid,\
+        const std::optional<bool>& ttsstatus, const std::optional<std::pmr::vector<Firebolt::SpeechSynthesis::Voice>>& voice);
 
     bool m_connected;
         

@@ -101,7 +101,6 @@ void logger_init()
     const char* level = getenv("TTS_DEFAULT_LOG_LEVEL");
     if (level)
         gDefaultLogLevel = static_cast<LogLevel>(atoi(level));
-     gDefaultLogLevel = 6;
 }
 
 void log(LogLevel level,
