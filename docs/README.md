@@ -49,7 +49,7 @@ classDef VL stroke:#808080,fill:#F2F2F2,stroke-width:2px;
 
 - **Multi-backend IPC abstraction**: Supports three communication backends — JSON-RPC (default), COM-RPC, and Firebolt — selectable at build time or runtime via environment variable, with a common API surface exposed to callers in all cases.
 - **Speech session lifecycle management**: Supports one speech session per `TTSClient`, with session ID `1`. A successful `createSession()` replaces the application/callback binding; `destroySession()` clears the session callback. `isActiveSession()` and `isSessionActiveForApp()` always return `true` and do not track active/idle state.
-- **Full speech control**: Exposes APIs to initiate speech synthesis (`speak`), pause, resume, and abort ongoing or pending speech requests.
+- **Speech control**: Exposes APIs to initiate speech synthesis (`speak`), pause, resume, and abort. In all three backends, `abort()` ignores `clearPending` and targets only the last recorded service speech ID; it does not clear all pending requests.
 - **TTS configuration management**: Allows reading and writing TTS parameters including endpoint URL, language, voice, volume, and speech rate.
 - **Event-driven callback model**: Delivers asynchronous notifications to callers for speech lifecycle events (start, pause, resume, interrupt, complete) and error conditions (network error, playback error), as well as TTS enable/disable state and voice change notifications. Speech cancellation (`onSpeechCancelled()`) is delivered only by the JSON-RPC backend; COM-RPC and Firebolt do not deliver it.
 - **Security token integration (JSON-RPC only)**: The JSON-RPC `Service` path acquires and uses WPEFramework security tokens when communicating with the Thunder plugin. The COM-RPC and Firebolt backends do not call these token functions. When the security utility is unavailable at build time (`SECURITY_TOKEN_ENABLED=0`), JSON-RPC requests are sent without a token.
@@ -58,7 +58,7 @@ classDef VL stroke:#808080,fill:#F2F2F2,stroke-width:2px;
 
 ## Design
 
-The TTS Engine client library is structured around a Bridge pattern that separates the public API from the underlying IPC mechanism. The `TTSClient` class is the entry point for callers; it owns a pointer to a `TTSClientPrivateInterface` instance selected at creation time based on the configured backend. The facade hides IPC transport details, but backend capabilities differ: Firebolt's `enableTTS()` is a no-op returning `TTS_OK`, and its `getSpeechState()` does not populate the output state. Callers must account for these limitations when switching backends.
+The TTS Engine client library is structured around a Bridge pattern that separates the public API from the underlying IPC mechanism. The `TTSClient` class is the entry point for callers; it owns a pointer to a `TTSClientPrivateInterface` instance selected at creation time based on the configured backend. The facade hides IPC transport details, but backend capabilities differ: Firebolt's `enableTTS()` is a no-op returning `TTS_OK`, its `getSpeechState()` does not populate the output state, and its `isSpeaking()` currently returns `false` even when speech is in progress. Callers must not use these Firebolt state queries to determine playback completion.
 
 The three backend implementations (`TTSClientPrivateJsonRPC`, `TTSClientPrivateCOMRPC`, `TTSClientPrivateFirebolt`) each own a corresponding service layer singleton (`TextToSpeechService`, `TextToSpeechServiceCOMRPC`, `TextToSpeechServiceFirebolt`) responsible for establishing and maintaining the IPC connection. The JSON-RPC and COM-RPC singletons connect to the `org.rdk.TextToSpeech` Thunder plugin; the Firebolt singleton instead connects to a separate Firebolt Core endpoint. The service singletons handle event subscription, connection monitoring, and per-backend protocol specifics.
 
@@ -169,7 +169,7 @@ sequenceDiagram
 
 #### Runtime State Changes
 
-After initialization, the client enters active state and responds to both app-driven API calls and inbound event notifications from the Thunder plugin.
+The initialization diagrams show successful-connection paths only. A non-null result from `TTSClient::create()` indicates client allocation, not an established connection: backend constructors invoke `onTTSServerConnected()` only if the corresponding service is active and a connection callback was supplied. Applications must track connection readiness separately before issuing operations that require an active service. Once connected, the client responds to app-driven API calls and inbound service event notifications.
 
 **State Change Triggers:**
 
@@ -187,6 +187,8 @@ After initialization, the client enters active state and responds to both app-dr
 ### Call Flows
 
 #### Initialization Call Flow
+
+> This diagram shows the successful-connection path only; a non-null `TTSClient::create()` result is client allocation, not a guarantee that `onTTSServerConnected()` was invoked.
 
 ```mermaid
 sequenceDiagram
@@ -357,7 +359,7 @@ TTS Engine communicates at the `org.rdk.TextToSpeech` Thunder plugin API boundar
 | `Exchange::ITextToSpeech::Cancel()`               | COM-RPC  | Abort ongoing speech                                        | `TextToSpeechServiceCOMRPC.cpp` |
 | `Exchange::ITextToSpeech::Pause()`                | COM-RPC  | Pause ongoing speech                                        | `TextToSpeechServiceCOMRPC.cpp` |
 | `Exchange::ITextToSpeech::Resume()`               | COM-RPC  | Resume paused speech                                        | `TextToSpeechServiceCOMRPC.cpp` |
-| `Exchange::ITextToSpeech::RegisterWithCallsign()` | COM-RPC  | Register notification listener with per-client callsign     | `TextToSpeechServiceCOMRPC.cpp` |
+| `Exchange::ITextToSpeech::RegisterWithCallsign()` | COM-RPC  | Register the singleton notification listener with the first registered callsign, shared across clients until service uninitialization | `TextToSpeechServiceCOMRPC.cpp` |
 
 ### Key Implementation Logic
 
